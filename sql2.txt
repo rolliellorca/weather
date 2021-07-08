@@ -1,0 +1,36 @@
+SELECT 
+	DISTINCT trn_teacher.id, 
+    trn_teacher.nickname,
+    time_table.open,
+    time_table.reserved,
+    evaluation.taught,
+    evaluation.no_show
+FROM 
+	trn_teacher
+JOIN
+	trn_teacher_role ON trn_teacher.id = trn_teacher_role.teacher_id
+JOIN
+	(
+		SELECT
+			teacher_id,
+            SUM(if(status = 1, 1, 0)) AS open,
+            SUM(if(status = 3, 1, 0)) AS reserved
+		FROM 
+			trn_time_table
+		GROUP BY
+			teacher_id
+	) time_table ON trn_teacher.id = time_table.teacher_id
+JOIN
+	(
+		SELECT
+			teacher_id,
+            SUM(if(result = 1, 1, 0)) AS taught,
+            SUM(if(result = 2, 1, 0)) AS no_show
+		FROM 
+			trn_evaluation
+		GROUP BY
+			teacher_id
+	) evaluation ON trn_teacher.id = evaluation.teacher_id
+WHERE
+	trn_teacher.status IN (1,2) AND
+    trn_teacher_role.role IN (1,2)

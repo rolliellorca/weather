@@ -1,0 +1,27 @@
+SELECT 
+	CONCAT( 'D', LPAD(trn_teacher.id, 11, 0)) as ID, 
+    trn_teacher.nickname, 
+    CASE trn_teacher.status
+		WHEN 0 THEN 'discontinued'
+		WHEN 1 THEN 'active'
+		WHEN 2 THEN 'deactive'
+	END as status,
+    teacher_role.role 
+FROM 
+	trn_teacher
+JOIN 
+(
+	SELECT 
+		teacher_id, 
+        GROUP_CONCAT(
+        CASE role
+			WHEN 1 THEN 'trainer'
+			WHEN 2 THEN 'assessor'
+			WHEN 3 THEN 'staff'
+		END
+		SEPARATOR '/') as role 
+	FROM 
+		trn_teacher_role 
+    GROUP BY 
+		teacher_id
+) teacher_role ON trn_teacher.id = teacher_role.teacher_id

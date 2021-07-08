@@ -1,0 +1,113 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <h2>Hi Travelers! Welcome to Japan</h2>
+                Please select City
+                <select name="city" id="city">
+                    <option>--</option>
+                </select>
+            </div>
+        </div>
+        <div id="info"></div>
+        <div id="weather"></div>
+        <div id="venues"></div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(function() {
+        $.getJSON('index.php/city/list', function(response) {
+
+            $.each(response, function (id, city) {
+                $("#city").append(new Option(city, id));
+                
+            });
+        });
+
+        $("#city").on('change', function() {
+            let lat = 0;
+            let lon = 0;
+            let city = this.value;
+
+            $.getJSON('index.php/city/info?city_id=' + city, function(response) {
+                // console.log(response);
+                lat = response.coord.lat;
+                lon = response.coord.lon;
+
+                $("#info").html(
+                    '<div class="row"><div class="col">' +
+                        "<h2>Info</h2><BR>" +
+                        "City: " + response.name + "<BR>" +
+                        "Population: " + response.population + "<BR>" +
+                        "Sunrise: " + response.sunrise + "<BR>" +
+                        "Sunset: " + response.sunset + "<BR>" +
+                    '</div></div>' 
+                );
+
+                $.getJSON('index.php/city/weather?city_id=' + city, function(response) {
+                    // console.log(response);
+
+                    output = '<table class="table">';
+                    $.each(response, function(index, value) {
+                        // console.log(index);
+                        // console.log(value);
+
+                        output += "<tr>"
+                        output += "<td>" + index + "</td>";
+                        $.each(value, function(index, value) {
+                            output += 
+                                "<td>" + 
+                                    index + "<BR>" +
+                                    "Temp " +  value.main.temp + "<BR>" +
+                                    "Feels like " + value.main.feels_like + "<BR>" +
+                                    "Humidity " + value.main.humidity + "<BR>" +
+                                    "Wind speed " + value.wind.speed + "<BR>" +
+                                "</td>";
+                        });
+                        output += "</tr>"
+                    });
+                        output += '</table>';
+
+                    $("#weather").html(
+                        "<h2>Weather forecast:</h2> <BR>" +
+                        output
+                    );
+                });
+                
+                $.getJSON('index.php/city/venues?lat=' + lat + '&lon=' + lon, function(response) {
+                    // console.log(response);
+
+                    output = '<div class="row">';
+                    $.each(response.response.venues, function(index, value) {
+                        output += '<div class="col-3"><address>'
+                        output += "Name: " + value.name + "<BR>";
+
+                        address = '';
+                        for (let i = 0; i < value.location.formattedAddress.length; i++) {
+                            address += value.location.formattedAddress[i] + " ";
+                        }
+                        output += "Address: " + address + "<BR>";
+                            
+                        categories = '';
+                        $.each(value.categories, function(i, category) {
+                            categories += category.name + ", ";
+                        });
+                        output += "Category: " + categories + "<BR>";
+                        output += '</address></div>';
+                    });
+                    output += '</div>';
+
+                    $("#venues").html(
+                        "<h2>Venues</h2><BR>" + output
+                    );
+                });
+
+            });
+        });
+    });
+</script>
+{% endblock %}
